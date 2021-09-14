@@ -6,7 +6,6 @@ const PORT = 8090;
 const dlDomain = 'default';
 
 // Loading OpenDSU Environment
-require('../privatesky/psknode/bundles/pskWebServer');
 require('../privatesky/psknode/bundles/openDSU');
 const openDSU = require('opendsu');
 
@@ -25,7 +24,7 @@ app.get('/leaflet', (req, res) => {
     const gtinResolver = require('gtin-resolver');
 
     // Creating GTINSSI based on query params
-    const gtinssi = gtinResolver.createGTIN_SSI(dlDomain, gtin, batch, expirationDate).getIdentifier();
+    const gtinssi = gtinResolver.createGTIN_SSI(dlDomain, undefined, gtin, batch, expirationDate).getIdentifier();
 
     // Loading DSU resolver
     const resolver = openDSU.loadApi('resolver');
