@@ -2,7 +2,6 @@ const express = require('express');
 const cors = require('cors');
 const app = express();
 app.use(cors());
-const PORT = 8090;
 const dlDomain = 'default';
 
 // Loading OpenDSU Environment
@@ -140,6 +139,6 @@ app.use('*', (req, res) => {
     res.status(404).send();
 })
 
-app.listen(PORT, () => {
-    console.log(`Express server up and running at ${PORT}`);
+app.listen(process.env.PORT, () => {
+    console.log(`Express server up and running at ${process.env.PORT}`);
 });
