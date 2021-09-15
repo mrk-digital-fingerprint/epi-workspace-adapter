@@ -9,7 +9,7 @@ This project and its folder has to sit inside of the `epi-workspace` root folder
 
 ## Installation
 
-In order to run the _express-demo_ you need to install the _epi-workspace_ first.
+In order to run the adapter, you need to install the `epi-workspace` first.
 Please follow the next steps in order to install the workspace succesfully:
 
 ```sh
@@ -30,7 +30,7 @@ $ npm run build-all
 ```
 
 ## Run the app
-After all previous steps are done, we can finally start the _express-demo_ app:
+After all previous steps are done, you have to configure `.env` file according to the `.env.template` file. Then you run:
 
 ```sh
 # Step 1: Go inside the [express-demo] folder
@@ -39,8 +39,6 @@ cd express-demo
 # Step 2: Run the express server
 npm run start
 ```
-
-The server is now up and running at port _8090_.
 
 ## REST API
 
