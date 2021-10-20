@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const bodyParser = require('body-parser')
 const app = express();
 app.use(cors());
 const dlDomain = 'default';
@@ -7,6 +8,7 @@ const dlDomain = 'default';
 // Loading OpenDSU Environment
 require('../privatesky/psknode/bundles/openDSU');
 const openDSU = require('opendsu');
+
 
 // Enabling GTINSSI resolver
 require('../gtin-resolver/build/bundles/gtinResolver');
@@ -46,7 +48,7 @@ app.get('/leaflet', (req, res) => {
     })
 })
 
-app.get('array', async (req, res) => {
+app.get('/array', async (req, res) => {
     const {arr, token} = req.query;
 
     if (!arr) {
@@ -79,8 +81,33 @@ app.get('array', async (req, res) => {
     }
 });
 
-app.post('array', (req, res) => {
-    // tbd
+app.post('/array', (req, res) => {
+    const {arr, token} = req.query;
+    const uniqueArr = [...arr.split(','), '2']
+
+    let body = [];
+    req.on('data', (chunk) => {
+        body.push(chunk);
+    }).on('end', () => {
+        body = Buffer.concat(body);
+
+        createArrayDSU(uniqueArr,(err, dsu) => {
+            if (err) {
+                console.error(err)
+                return res.status(500).send('Error creating DSU');
+            }
+
+            dsu.writeFile(process.env.DSU_DATA_PATH, body.toString(), (error) => {
+                if (error) {
+                    console.error(error)
+                    return res.status(500).send('Error writing into DSU');
+                }
+
+                return res.status(200).send('OK');
+            });
+
+        })
+    });
 })
 
 /**
@@ -102,6 +129,20 @@ const createArraySSI = (arr, callback, domain = process.env.DSU_DOMAIN, bricksDo
 
     return keyssiSpace.createArraySSI(domain, arr, 'v0', hint ? JSON.stringify(hint) : undefined, callback ? callback : undefined)
 }
+
+const createArrayDSU = (arr, callback, domain = process.env.DSU_DOMAIN, bricksDomain) => {
+    const openDSU = require('opendsu');
+    const resolver = openDSU.loadApi('resolver')
+    let hint;
+    if (bricksDomain && openDSU.constants?.BRICKS_DOMAIN_KEY) {
+        hint = {};
+        hint[openDSU.constants.BRICKS_DOMAIN_KEY] = [domain, bricksDomain].join('.');
+    }
+
+    return resolver.createArrayDSU(domain, arr, {}, callback)
+}
+
+
 
 /**
  * Read the contents of an Array SSI
