@@ -1,17 +1,46 @@
+const fs = require('fs');
+const util = require('util');
+const path = require('path')
+
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser')
 const app = express();
+
+const extract = require('extract-zip')
 app.use(cors());
-const dlDomain = 'default';
 
 // Loading OpenDSU Environment
+const dlDomain = 'default';
 require('../privatesky/psknode/bundles/openDSU');
 const openDSU = require('opendsu');
-
-
 // Enabling GTINSSI resolver
 require('../gtin-resolver/build/bundles/gtinResolver');
+
+const readdir =  util.promisify(fs.readdir);
+const readFile =  util.promisify(fs.readFile);
+
+const tmpFolder = './tmp'
+
+
+const writeFile = (dsu, fileName, fileData) => {
+    console.log(fileName)
+    return new Promise((resolve, reject) => {
+        dsu.writeFile(fileName, fileData, (error) => {
+            if (error) {
+                return reject(error)
+            }
+
+            resolve(true)
+        });
+    })
+}
+
+const rm = (path) => {
+    return fs.rm(path, {recursive: true, force: true}, (err) => {
+        console.error(`Error while removing ${path}`, err)
+    })
+}
 
 // Defining a GET with /leaflet endpoint that based on query params is able to load a DSU and retrieve the leaflet file from it
 app.get('/leaflet', (req, res) => {
@@ -83,28 +112,77 @@ app.get('/array', async (req, res) => {
 
 app.post('/array', (req, res) => {
     const {arr, token} = req.query;
-    const uniqueArr = [...arr.split(','), '2']
+    const uniqueArr = [...arr.split(','), '3']
 
     let body = [];
     req.on('data', (chunk) => {
         body.push(chunk);
     }).on('end', () => {
         body = Buffer.concat(body);
-
         createArrayDSU(uniqueArr,(err, dsu) => {
             if (err) {
                 console.error(err)
                 return res.status(500).send('Error creating DSU');
             }
 
-            dsu.writeFile(process.env.DSU_DATA_PATH, body.toString(), (error) => {
-                if (error) {
-                    console.error(error)
-                    return res.status(500).send('Error writing into DSU');
+            const zipFile = path.resolve(`${tmpFolder}/${uniqueArr.join('')}.zip`)
+            const outputDir = path.resolve(`${tmpFolder}/${uniqueArr.join('')}`)
+
+            fs.writeFile(zipFile, body, async (e) => {
+                if (e) {
+                    console.error(e);
+
+                    res.status(500).send(`Error writing the .zip file: ${zipFile}`);
+                    return rm(zipFile)
                 }
 
-                return res.status(200).send('OK');
-            });
+                const cleanup = () => {
+                    rm(zipFile)
+                    rm(outputDir)
+                }
+
+                try {
+                    await extract(zipFile, {dir: outputDir})
+                }
+                catch (error) {
+                    console.error(error)
+                    res.status(500).send(`Error extracting the .zip file: ${zipFile}`);
+
+                    return cleanup()
+                }
+
+                const outputDirContents = await readdir(outputDir)
+                dsu.beginBatch()
+                try {
+                    for (let j = 0; j < outputDirContents.length; j++) {
+                        const file = outputDirContents[j];
+                        const buffer = await readFile(`${outputDir}/${file}`);
+                        await writeFile(dsu, file, buffer.toString())
+                    }
+                }
+
+                catch (e) {
+                    console.error(e)
+                    res.status(500).send(`Error writing files into DSU: ${uniqueArr.join('')}`);
+
+                    return cleanup()
+                }
+
+                dsu.commitBatch((e) => {
+                    console.log('commit batch')
+                    if (e) {
+                        console.error(e)
+                        res.status(500).send(`Error anchoring DSU: ${uniqueArr.join('')}`);
+
+                        return cleanup()
+                    }
+
+                    res.status(200).send('OK');
+                    return cleanup()
+
+                })
+
+            })
 
         })
     });

@@ -8,25 +8,10 @@ This project is meant to show how Express server can interact with OpenDSU. This
 This project and its folder has to sit inside of the `epi-workspace` root folder.
 
 ## Installation
-
-In order to run the adapter, you need to install the `epi-workspace` first.
-Please follow the next steps in order to install the workspace succesfully:
-
+You have to create a `tmp` dir for that serves for the leaflet manipulation.
 ```sh
-# Step 1: Clone the [epi-workspace] repository:
-$ git clone https://github.com/PharmaLedger-IMI/epi-workspace.git
-
-# Step 2: Go inside the [epi-workspace] folder
-$ cd epi-workspace
-
-# Step 3: Brings all dependencies needed
-$ npm install
-
-# Step 4: Launch the Node js
-$ npm run server
-
-# Step 5: Scans all applications and wallet it finds in the configuration and tries to run the build script for each one
-$ npm run build-all
+mkdir tmp
+chmod ??? ./tmp
 ```
 
 ## Run the app
