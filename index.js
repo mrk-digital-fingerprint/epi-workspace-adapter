@@ -38,7 +38,9 @@ const writeFile = (dsu, fileName, fileData) => {
 
 const rm = (path) => {
     return fs.rm(path, {recursive: true, force: true}, (err) => {
-        console.error(`Error while removing ${path}`, err)
+        if (err) {
+            console.error(`Error while removing ${path}`, err)
+        }
     })
 }
 
