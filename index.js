@@ -202,7 +202,7 @@ const createArraySSI = (arr, callback, domain = process.env.DSU_DOMAIN, bricksDo
     const openDSU = require('opendsu');
     const keyssiSpace = openDSU.loadApi('keyssi');
     let hint;
-    if (bricksDomain && openDSU.constants?.BRICKS_DOMAIN_KEY) {
+    if (bricksDomain && openDSU.constants && openDSU.constants.BRICKS_DOMAIN_KEY) {
         hint = {};
         hint[openDSU.constants.BRICKS_DOMAIN_KEY] = [domain, bricksDomain].join('.');
     }
@@ -214,7 +214,7 @@ const createArrayDSU = (arr, callback, domain = process.env.DSU_DOMAIN, bricksDo
     const openDSU = require('opendsu');
     const resolver = openDSU.loadApi('resolver')
     let hint;
-    if (bricksDomain && openDSU.constants?.BRICKS_DOMAIN_KEY) {
+    if (bricksDomain && openDSU.constants && openDSU.constants.BRICKS_DOMAIN_KEY) {
         hint = {};
         hint[openDSU.constants.BRICKS_DOMAIN_KEY] = [domain, bricksDomain].join('.');
     }
