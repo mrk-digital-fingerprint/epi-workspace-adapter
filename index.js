@@ -44,10 +44,10 @@ const rm = (path) => {
     })
 }
 
-// JBO added /check 
+// ELF-363 added /check for healthchecks in k8s 
 app.get('/check', (req, res) => {
     
-    let response = 'OK'.concat(req.toString());
+    let response = 'OK';
     // Responding with the query  content
     res.status(200).send(response);
 
