@@ -44,6 +44,17 @@ const rm = (path) => {
     })
 }
 
+// ELF-363 added /check for healthchecks in k8s 
+app.get('/check', (req, res) => {
+    
+    let response = 'OK';
+    // Responding with the query  content
+    res.status(200).send(response);
+
+})
+
+
+
 // Defining a GET with /leaflet endpoint that based on query params is able to load a DSU and retrieve the leaflet file from it
 app.get('/leaflet', (req, res) => {
     let {gtin, batch, expirationDate} = req.query;
