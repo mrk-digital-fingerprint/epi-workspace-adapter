@@ -124,6 +124,48 @@ app.get('/array', async (req, res) => {
 
 app.post('/array', (req, res) => {
     const {arr, token} = req.query;
+    const uniqueArr = [...JSON.parse(arr), '3']
+
+    let body = [];
+    req.on('data', (chunk) => {
+        body.push(chunk);
+    }).on('end', () => {
+        body = Buffer.concat(body);
+        createArrayDSU(uniqueArr,(err, dsu) => {
+            if (err) {
+                console.error(err)
+                return res.status(500).send('Error creating DSU');
+            }
+            dsu.beginBatch()
+            try {
+                await writeFile(dsu, 'leaflet.json', body.toString())
+            }
+            catch (e) {
+                console.error(e)
+                res.status(500).send(`Error writing files into DSU: ${uniqueArr.join('')}`);
+
+                return cleanup()
+            }
+
+            dsu.commitBatch((e) => {
+                console.log('commit batch')
+                if (e) {
+                    console.error(e)
+                    res.status(500).send(`Error anchoring DSU: ${uniqueArr.join('')}`);
+
+                    return cleanup()
+                }
+
+                res.status(200).send('OK');
+                return cleanup()
+            })
+        })
+    });
+})
+
+
+app.post('/array-compressed', (req, res) => {
+    const {arr, token} = req.query;
     const uniqueArr = [...arr.split(','), '3']
 
     let body = [];
