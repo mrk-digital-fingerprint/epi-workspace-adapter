@@ -24,7 +24,6 @@ const tmpFolder = './tmp'
 
 
 const writeFile = (dsu, fileName, fileData) => {
-    console.log(fileName)
     return new Promise((resolve, reject) => {
         dsu.writeFile(fileName, fileData, (error) => {
             if (error) {
@@ -92,34 +91,34 @@ app.get('/leaflet', (req, res) => {
 
 app.get('/array', async (req, res) => {
     const {arr, token} = req.query;
-
+    let dsuArr
+    console.log('arr', arr, JSON.parse(arr));
     if (!arr) {
         return res.status(400).send('Missing arr param.');
     }
 
     try {
-        const dsuArr = JSON.parse(arr)
+        dsuArr = JSON.parse(arr)
 
         if (!dsuArr.length || dsuArr.length === 0) {
             throw new Error('Wrong format of arr')
+        }
+
+        try {
+            const productJSON = await readArraySSI(dsuArr);
+
+            return res.status(200).json(productJSON);
+        }
+        catch (e) {
+            console.error(e);
+
+            return res.status(500).send('Error reading DSU');
         }
     }
     catch (e) {
         console.error(e);
 
         return res.status(400).send('Wrong format of arr');
-    }
-
-
-    try {
-        const productJSON = await readArraySSI(arr);
-
-        return res.status(200).send(productJSON);
-    }
-    catch (e) {
-        console.error(e);
-
-        return res.status(500).send('Error reading DSU');
     }
 });
 
@@ -173,7 +172,6 @@ app.post('/array', (req, res) => {
                         await writeFile(dsu, file, buffer.toString())
                     }
                 }
-
                 catch (e) {
                     console.error(e)
                     res.status(500).send(`Error writing files into DSU: ${uniqueArr.join('')}`);
@@ -243,8 +241,8 @@ const createArrayDSU = (arr, callback, domain = process.env.DSU_DOMAIN, bricksDo
 const readArraySSI = (arr) => {
     const resolver = openDSU.loadApi('resolver');
 
-    return new Promise<object>((resolve, reject) => {
-        resolver.loadDSU(this.createArraySSI(arr), (err, dsu) => {
+    return new Promise((resolve, reject) => {
+        resolver.loadDSU(createArraySSI(arr), (err, dsu) => {
             if (err) {
                 return reject(err);
             }
